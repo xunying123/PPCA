@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -26,6 +25,7 @@ func main() {
 }
 
 func process(client net.Conn) {
+	fmt.Println("processing")
 	array := make([]byte, 32*1024)
 	n, Err := io.ReadFull(client, array[:2])
 	if Err != nil {
@@ -51,7 +51,7 @@ func process(client net.Conn) {
 		return
 	}
 	_, _ = client.Write([]byte{0x05, 0x00})
-
+	fmt.Println(2)
 	_, eee := io.ReadFull(client, array[:4])
 	if eee != nil {
 		fmt.Println("read error")
@@ -112,88 +112,41 @@ func process(client net.Conn) {
 		fmt.Println("unsupported address")
 		return
 	}
+	fmt.Println(addr)
 	nn, _ := client.Read(array[n : n+10240])
-	search := []byte{0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31}
-	index := bytes.Index(array, search)
 	var proxy [16]string
-	var count int = 0
-	proxy, count = divide(addr, ayp)
-	if index == -1 {
-		if array[n] == 0x16 && array[n+1] == 0x03 && array[n+2] == 0x01 {
-			ss := ""
-			a := array[n+110]
-			b := array[n+110+int(a)]
-			c := array[n+111+int(a)]
-			d := int(b)*256 + int(c)
-			for i := 0; i < d; {
-				b = array[n+112+int(a)+i]
-				c = array[n+112+int(a)+i+1]
-				e := int(b)*256 + int(c)
-				if e == 0x00 {
-					b = array[n+112+int(a)+i+2]
-					c = array[n+112+int(a)+i+3]
-					e = int(b)*256 + int(c)
-					for j := 0; j < e; j++ {
-						ss += string(array[n+112+int(a)+i+4+j])
-					}
-					var Type byte = 0
-					if ss[0] >= '0' && ss[0] <= '9' {
-						cnt := 0
-						for i := 0; i < len(ss); i++ {
-							if ss[i] == '.' {
-								cnt++
-							}
-						}
-						if cnt == 3 {
-							Type = 1
-						} else {
-							Type = 4
-						}
-					} else {
-						Type = 0x03
-					}
-					proxy, count = divide(ss, Type)
-					break
-				} else {
-					b = array[n+112+int(a)+i+2]
-					c = array[n+112+int(a)+i+3]
-					e = int(b)*256 + int(c)
-					i += e + 4
-				}
-			}
+	var count = 0
+	proxy, eee, count = http(array)
+	if eee == nil {
+		if ype == 0x01 {
+			tcp(client, proxy, addr, n, nn, array, count)
+		} else {
+			udp(client, proxy, addr, n, nn, array, count)
 		}
 	} else {
-		search = []byte{0x48, 0x6F, 0x73, 0x74, 0x3A, 0x20, 0x2E}
-		index = bytes.Index(array, search)
-		index += 6
-		ss := ""
-		for i := index; ; i++ {
-			if array[i] == '\n' {
-				break
-			}
-			ss += string(array[i])
-		}
-		var Type byte = 0
-		if ss[0] >= '0' && ss[0] <= '9' {
-			cnt := 0
-			for i := 0; i < len(ss); i++ {
-				if ss[i] == '.' {
-					cnt++
-				}
-			}
-			if cnt == 3 {
-				Type = 1
+		proxy, eee, count = tls(array, n)
+		if eee == nil {
+			if ype == 0x01 {
+				tcp(client, proxy, addr, n, nn, array, count)
 			} else {
-				Type = 4
+				udp(client, proxy, addr, n, nn, array, count)
 			}
 		} else {
-			Type = 0x03
+			proxy, eee, count = pid()
+			if eee == nil {
+				if ype == 0x01 {
+					tcp(client, proxy, addr, n, nn, array, count)
+				} else {
+					udp(client, proxy, addr, n, nn, array, count)
+				}
+			} else {
+				proxy, count = divide(addr, ayp)
+				if ype == 0x01 {
+					tcp(client, proxy, addr, n, nn, array, count)
+				} else {
+					udp(client, proxy, addr, n, nn, array, count)
+				}
+			}
 		}
-		proxy, count = divide(ss, Type)
-	}
-	if ype == 0x01 {
-		tcp(client, proxy, addr, n, nn, array, count)
-	} else {
-		udp(client, proxy, addr, n, nn, array, count)
 	}
 }

@@ -91,7 +91,7 @@ func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 			}
 			res := []byte{0x05, 0x01, 0x00, byte(ayp)}
 			res = append(res, ip_...)
-			_, _ = dest.Write(binary.BigEndian.AppendUint16([]byte(res), port))
+			_, _ = dest.Write(binary.BigEndian.AppendUint16(res, port))
 			nnn, eee := io.ReadFull(dest, array[:])
 			if eee != nil {
 				fmt.Println("wrong read")
