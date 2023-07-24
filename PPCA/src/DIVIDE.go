@@ -126,7 +126,7 @@ func divide(addr string, a byte) ([16]string, int) {
 					}
 				}
 			}
-			return proxy, -1
+			return proxy, 0
 		}
 	case 0x04:
 		{
@@ -230,12 +230,15 @@ func http(array []byte) ([16]string, error, int) {
 	search := []byte{0x48, 0x54, 0x54, 0x50, 0x2F, 0x31, 0x2E, 0x31}
 	index := bytes.Index(array, search)
 	var proxy [16]string
-	fmt.Println(index)
+	fmt.Println("http head location:", index)
+	fmt.Println("http processing")
 	if index == -1 {
+		fmt.Println("no http")
 		return proxy, errors.New("wrong http"), 0
 	}
-	search = []byte{0x48, 0x6F, 0x73, 0x74, 0x3A, 0x20, 0x2E}
+	search = []byte{0x48, 0x6F, 0x73, 0x74}
 	index = bytes.Index(array, search)
+	fmt.Println("Host location:", index)
 	index += 6
 	ss := ""
 	for i := index; ; i++ {
@@ -244,6 +247,7 @@ func http(array []byte) ([16]string, error, int) {
 		}
 		ss += string(array[i])
 	}
+	var count = 0
 	var Type byte = 0
 	if ss[0] >= '0' && ss[0] <= '9' {
 		cnt := 0
@@ -260,7 +264,8 @@ func http(array []byte) ([16]string, error, int) {
 	} else {
 		Type = 0x03
 	}
-	var count = 0
+	fmt.Println(ss)
+	fmt.Println(Type)
 	proxy, count = divide(ss, Type)
 	return proxy, nil, count
 }
@@ -268,22 +273,22 @@ func http(array []byte) ([16]string, error, int) {
 func tls(array []byte, n int) ([16]string, error, int) {
 	var count = 0
 	var proxy [16]string
+	fmt.Println("tls processing")
 	if array[n] == 0x16 && array[n+1] == 0x03 && array[n+2] == 0x01 {
 		ss := ""
-		a := array[n+110]
-		b := array[n+110+int(a)]
-		c := array[n+111+int(a)]
+		b := array[n+112]
+		c := array[n+113]
 		d := int(b)*256 + int(c)
 		for i := 0; i < d; {
-			b = array[n+112+int(a)+i]
-			c = array[n+112+int(a)+i+1]
+			b = array[n+114+i]
+			c = array[n+115+i]
 			e := int(b)*256 + int(c)
 			if e == 0x00 {
-				b = array[n+112+int(a)+i+2]
-				c = array[n+112+int(a)+i+3]
+				b = array[n+116+i]
+				c = array[n+117+i]
 				e = int(b)*256 + int(c)
 				for j := 0; j < e; j++ {
-					ss += string(array[n+112+int(a)+i+4+j])
+					ss += string(array[n+118+i+j])
 				}
 				var Type byte = 0
 				if ss[0] >= '0' && ss[0] <= '9' {
@@ -301,16 +306,18 @@ func tls(array []byte, n int) ([16]string, error, int) {
 				} else {
 					Type = 0x03
 				}
+				fmt.Println("tls addr:" + ss)
 				proxy, count = divide(ss, Type)
 				return proxy, nil, count
 			} else {
-				b = array[n+112+int(a)+i+2]
-				c = array[n+112+int(a)+i+3]
+				b = array[n+116+i]
+				c = array[n+117+i]
 				e = int(b)*256 + int(c)
 				i += e + 4
 			}
 		}
 	}
+	fmt.Println("wrong tls")
 	return proxy, errors.New("wrong tls"), 0
 }
 
@@ -319,8 +326,10 @@ func pid() ([16]string, error, int) {
 	var proxy [16]string
 	var inode = 0
 	file, err := os.Open("/proc/net/tcp")
+	fmt.Println("pid processing")
 	if err != nil {
 		fmt.Println("无法打开文件:", err)
+		fmt.Println("wrong tls")
 		return proxy, errors.New("wrong tls"), count
 	}
 	defer file.Close()

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"strings"
 )
 
 func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []byte, count int) {
@@ -19,18 +18,18 @@ func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 		}
 		fmt.Println("UDP_addr", addr)
 		fmt.Println("clientAddr", clientAddr.IP)
-		clientUDP, err1 := net.ListenUDP("udp", nil)
-		if err1 != nil {
+		clientUDP, _ := net.ListenUDP("udp", nil)
+		/*if err1 != nil {
 			_, _ = client.Write([]byte{0x05, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00})
 			return
-		}
-		remoteUDP, err2 := net.ListenUDP("udp", nil)
-		if err2 != nil {
+		}*/
+		remoteUDP, _ := net.ListenUDP("udp", nil)
+		/*if err2 != nil {
 			_ = clientUDP.Close()
 			_, _ = client.Write([]byte{0x05, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00})
 			return
-		}
-		idDes, portDes, _ := net.SplitHostPort(clientUDP.LocalAddr().String())
+		}*/
+		/*idDes, portDes, _ := net.SplitHostPort(clientUDP.LocalAddr().String())
 		ip_ := net.ParseIP(idDes)
 		po_, _ := strconv.Atoi(portDes)
 		port := uint16(po_)
@@ -42,7 +41,7 @@ func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 		}
 		res := []byte{0x05, 0x00, 0x00, byte(ayp)}
 		res = append(res, ip_...)
-		_, _ = client.Write(binary.BigEndian.AppendUint16(res, port))
+		_, _ = client.Write(binary.BigEndian.AppendUint16(res, port))*/
 
 		parent := context.Background()
 		ctx, cancel := context.WithCancel(parent)
@@ -66,9 +65,8 @@ func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 		}
 		return
 	} else {
-		dest, Err := net.Dial("tcp", proxy[0])
-		defer dest.Close()
-		if Err != nil {
+		dest, _ := net.Dial("tcp", proxy[0])
+		/*if Err != nil {
 			var failed byte = 0x00
 			if strings.Contains(Err.Error(), "proxy invalid.invalid") {
 				failed = 0x04
@@ -85,15 +83,15 @@ func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 			}
 			_, _ = client.Write([]byte{0x05, failed, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00})
 			return
-		}
+		}*/
 		_, _ = dest.Write([]byte{0x05, 0x01, 0x00})
 		array := make([]byte, 32*1024)
-		n, ERr := io.ReadFull(dest, array[:2])
+		N, ERr := io.ReadFull(dest, array[:2])
 		if ERr != nil {
 			fmt.Println("wrong read")
 			return
 		}
-		if n != 2 || array[0] != 0x05 || array[1] != 0x00 {
+		if N != 2 || array[0] != 0x05 || array[1] != 0x00 {
 			return
 		}
 		for i := 1; i < count; i++ {
@@ -110,7 +108,7 @@ func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 			res := []byte{0x05, 0x01, 0x00, byte(ayp)}
 			res = append(res, ip_...)
 			_, _ = dest.Write(binary.BigEndian.AppendUint16(res, port))
-			nnn, eee := io.ReadFull(dest, array[:])
+			nnn, eee := dest.Read(array[:])
 			if eee != nil {
 				fmt.Println("wrong read")
 				return
@@ -120,17 +118,16 @@ func udp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 				return
 			}
 			_, _ = dest.Write([]byte{0x05, 0x03, 0x00})
-			n, ERr := io.ReadFull(dest, array[:2])
+			N, ERr := io.ReadFull(dest, array[:2])
 			if ERr != nil {
 				fmt.Println("wrong read")
 				return
 			}
-			if n != 2 || array[0] != 0x05 || array[1] != 0x00 {
+			if N != 2 || array[0] != 0x05 || array[1] != 0x00 {
 				return
 			}
 		}
-		_, _ = dest.Write(Array[:n])
-		nnn, eee := io.ReadFull(dest, array[:])
+		nnn, eee := dest.Read(array[:])
 		if eee != nil {
 			fmt.Println("wrong read")
 			return

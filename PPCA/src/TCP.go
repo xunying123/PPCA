@@ -6,13 +6,12 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"strings"
 )
 
 func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []byte, count int) {
-	if count == -1 {
-		dest, Err := net.Dial("tcp", addr)
-		fmt.Println(Err)
+	if count == 0 {
+		dest, _ := net.Dial("tcp", addr)
+		/*fmt.Println(Err)
 		if Err != nil {
 			var failed byte = 0x00
 			if strings.Contains(Err.Error(), "invalid.invalid") {
@@ -44,13 +43,13 @@ func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 
 		res := []byte{0x05, 0x00, 0x00, byte(ayp)}
 		res = append(res, ip_...)
-		_, _ = client.Write(binary.BigEndian.AppendUint16(res, port))
+		_, _ = client.Write(binary.BigEndian.AppendUint16(res, port))*/
 		_, _ = dest.Write(Array[n : n+nn])
 		transfer(client, dest)
 	} else {
-		dest, Err := net.Dial("tcp", proxy[0])
-		defer dest.Close()
-		if Err != nil {
+		dest, _ := net.Dial("tcp", proxy[0])
+		fmt.Println("tcp start")
+		/*if Err != nil {
 			var failed byte = 0x00
 			if strings.Contains(Err.Error(), "proxy invalid.invalid") {
 				failed = 0x04
@@ -67,18 +66,19 @@ func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 			}
 			_, _ = client.Write([]byte{0x05, failed, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00})
 			return
-		}
+		}*/
 		_, _ = dest.Write([]byte{0x05, 0x01, 0x00})
 		array := make([]byte, 32*1024)
-		n, ERr := io.ReadFull(dest, array[:2])
+		N, ERr := io.ReadFull(dest, array[:2])
 		if ERr != nil {
 			fmt.Println("wrong read")
 			return
 		}
-		if n != 2 || array[0] != 0x05 || array[1] != 0x00 {
+		if N != 2 || array[0] != 0x05 || array[1] != 0x00 {
 			return
 		}
 		for i := 1; i < count; i++ {
+			fmt.Println("for")
 			ayp := 0
 			ipDes, portDes, _ := net.SplitHostPort(proxy[i])
 			ip_ := net.ParseIP(ipDes)
@@ -92,7 +92,7 @@ func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 			res := []byte{0x05, 0x01, 0x00, byte(ayp)}
 			res = append(res, ip_...)
 			_, _ = dest.Write(binary.BigEndian.AppendUint16(res, port))
-			nnn, eee := io.ReadFull(dest, array[:])
+			nnn, eee := dest.Read(array[:])
 			if eee != nil {
 				fmt.Println("wrong read")
 				return
@@ -102,17 +102,18 @@ func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 				return
 			}
 			_, _ = dest.Write([]byte{0x05, 0x01, 0x00})
-			n, ERr := io.ReadFull(dest, array[:2])
+			N, ERr := io.ReadFull(dest, array[:2])
 			if ERr != nil {
 				fmt.Println("wrong read")
 				return
 			}
-			if n != 2 || array[0] != 0x05 || array[1] != 0x00 {
+			if N != 2 || array[0] != 0x05 || array[1] != 0x00 {
 				return
 			}
 		}
+		fmt.Println("write")
 		_, _ = dest.Write(Array[:n])
-		nnn, eee := io.ReadFull(dest, array[:])
+		nnn, eee := dest.Read(array[:])
 		if eee != nil {
 			fmt.Println("wrong read")
 			return
@@ -121,9 +122,8 @@ func tcp(client net.Conn, proxy [16]string, addr string, n int, nn int, Array []
 			fmt.Println("wrong read")
 			return
 		}
-		_, _ = client.Write(array[:nnn])
 		_, _ = dest.Write(Array[n : n+nn])
-		transfer(dest, client)
+		transfer(client, dest)
 	}
 }
 

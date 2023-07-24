@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -51,7 +53,7 @@ func process(client net.Conn) {
 		return
 	}
 	_, _ = client.Write([]byte{0x05, 0x00})
-	fmt.Println(2)
+	fmt.Println("first handshake")
 	_, eee := io.ReadFull(client, array[:4])
 	if eee != nil {
 		fmt.Println("read error")
@@ -112,8 +114,44 @@ func process(client net.Conn) {
 		fmt.Println("unsupported address")
 		return
 	}
-	fmt.Println(addr)
+	fmt.Println("addr:" + addr)
+	Dest, ERr := net.Dial("tcp", addr)
+	if ERr != nil {
+		var failed byte = 0x00
+		if strings.Contains(Err.Error(), "invalid.invalid") {
+			failed = 0x04
+		} else if strings.Contains(Err.Error(), "connection refused") {
+			failed = 0x05
+		} else if strings.Contains(Err.Error(), "no route") {
+			failed = 0x03
+		} else if strings.Contains(Err.Error(), "i/o timeout") {
+			failed = 0x04
+		} else if strings.Contains(Err.Error(), "network is unreachable") {
+			failed = 0x03
+		} else if strings.Contains(Err.Error(), "failure in name resolution") {
+			failed = 0x04
+		}
+		_, _ = client.Write([]byte{0x05, failed, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00})
+		return
+	}
+	defer Dest.Close()
+
+	ipDes, portDes, _ := net.SplitHostPort(Dest.LocalAddr().String())
+	ip_ := net.ParseIP(ipDes)
+	po_, _ := strconv.Atoi(portDes)
+	port := uint16(po_)
+	ap := 0
+	if len(ip_) == 16 {
+		ap = 0x04
+	} else {
+		ap = 0x01
+	}
+
+	res := []byte{0x05, 0x00, 0x00, byte(ap)}
+	res = append(res, ip_...)
+	_, _ = client.Write(binary.BigEndian.AppendUint16(res, port))
 	nn, _ := client.Read(array[n : n+10240])
+	//fmt.Println(array[n : n+nn])
 	var proxy [16]string
 	var count = 0
 	proxy, eee, count = http(array)
