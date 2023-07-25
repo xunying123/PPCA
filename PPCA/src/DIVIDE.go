@@ -33,13 +33,11 @@ func divide(addr string, a byte) ([16]string, int) {
 					i := 2
 					for ; i < n; i++ {
 						if line[i] == '.' {
-							ll = ll*1000 + uint32(num)
+							ll = ll<<8 + uint32(num)
 							num = 0
 						} else if line[i] == '/' {
-							ll = ll*1000 + uint32(num)
+							ll = ll<<8 + uint32(num)
 							num = 0
-						} else if line[i] == ' ' {
-							break
 						} else {
 							num = num*10 + line[i] - '0'
 						}
@@ -57,7 +55,7 @@ func divide(addr string, a byte) ([16]string, int) {
 					var nll uint32 = 0
 					for j := 0; j < nn; j++ {
 						if addr[j] == '.' {
-							nll = nll*1000 + uint32(Num)
+							nll = nll<<8 + uint32(Num)
 							Num = 0
 						} else if addr[j] == ':' {
 							break
@@ -328,7 +326,6 @@ func pid() ([16]string, error, int) {
 	file, err := os.Open("/proc/net/tcp")
 	fmt.Println("pid processing")
 	if err != nil {
-		fmt.Println("无法打开文件:", err)
 		fmt.Println("wrong tls")
 		return proxy, errors.New("wrong tls"), count
 	}
