@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -27,46 +28,24 @@ func divide(addr string, a byte) ([16]string, int) {
 				line := scanner.Text()
 				if line[0] == '0' {
 					n := len(line)
-					var num uint8 = 0
-					var ll uint32 = 0
-					var rr uint32 = 0
-					i := 2
-					for ; i < n; i++ {
-						if line[i] == '.' {
-							ll = ll<<8 + uint32(num)
-							num = 0
-						} else if line[i] == '/' {
-							ll = ll<<8 + uint32(num)
-							num = 0
-						} else {
-							num = num*10 + line[i] - '0'
-						}
-					}
-					rr = 0b11111111111111111111111111111111
-					var temp uint32 = 0b11111111111111111111111111111111
-					for j := 0; uint8(j) < num; j++ {
-						rr = rr << 1
-					}
-					ll = ll & rr
-					rr = temp ^ rr
-					rr = ll | rr
-					nn := len(addr)
-					var Num uint8 = 0
-					var nll uint32 = 0
-					for j := 0; j < nn; j++ {
-						if addr[j] == '.' {
-							nll = nll<<8 + uint32(Num)
-							Num = 0
-						} else if addr[j] == ':' {
-							break
-						} else {
-							Num = Num*10 + addr[j] - '0'
-						}
+					var cidr = line[2:n]
+					ip, ipNet, _ := net.ParseCIDR(cidr)
+					mask := ipNet.Mask.String()
+					var ll = ip.String()
+					lastIP := make(net.IP, len(ip))
+					for i := range ip {
+						lastIP[i] = ip[i] | ^mask[i]
 					}
 					if count > 0 {
 						return proxy, count
 					}
-					if (nll > ll) && (nll < rr) {
+					var rr = lastIP.String()
+
+					l := uint32(ll[0])<<24 | uint32(ll[1])<<16 | uint32(ll[2])<<8 | uint32(ll[3])
+					r := uint32(rr[0])<<24 | uint32(rr[1])<<16 | uint32(rr[2])<<8 | uint32(rr[3])
+					a := uint32(addr[0])<<24 | uint32(addr[1])<<16 | uint32(addr[2])<<8 | uint32(addr[3])
+
+					if (a > l) && (a < r) {
 						count = 0
 					} else {
 						count = -1
@@ -139,77 +118,30 @@ func divide(addr string, a byte) ([16]string, int) {
 				line := scanner.Text()
 				if line[0] == '0' {
 					n := len(line)
-					COU := 0
-					var num uint8 = 0
-					var ll1 uint64 = 0
-					var ll2 uint64 = 0
-					var rr1 uint64 = 0
-					var rr2 uint64 = 0
-					i := 0
-					for ; i < n; i++ {
-						if line[i] == ':' {
-							ll2 = ll2*10000 + uint64(num)
-							COU++
-							if COU == 8 {
-								ll1 = ll2
-								ll2 = 0
-							}
-							num = 0
-						} else if line[i] == '/' {
-							ll2 = ll2*10000 + uint64(num)
-							num = 0
-						} else if line[i] == ' ' {
-							break
-						} else {
-							num = num*10 + line[i] - '0'
-						}
-					}
-					rr1 = 0b1111111111111111111111111111111111111111111111111111111111111111
-					rr2 = 0b1111111111111111111111111111111111111111111111111111111111111111
-					var temp uint64 = 0b1111111111111111111111111111111111111111111111111111111111111111
-					for j := 0; uint8(j) < num; j++ {
-						if j <= 31 {
-							rr2 = rr2 << 1
-						} else {
-							rr1 = rr1 << 1
-						}
-
-					}
-					ll1 = ll1 & rr1
-					ll2 = ll2 & rr2
-					rr1 = temp ^ rr1
-					rr2 = temp ^ rr2
-					rr1 = ll1 | rr1
-					rr2 = ll2 | rr2
-					nn := len(addr)
-					var Num uint8 = 0
-					var nll1 uint64 = 0
-					var nll2 uint64 = 0
-					COU = 0
-					for j := 1; j < nn; j++ {
-						if addr[j] == ':' {
-							nll2 = nll2*10000 + uint64(Num)
-							COU++
-							if COU == 8 {
-								nll1 = nll2
-								nll2 = 0
-							}
-							Num = 0
-						} else if addr[j] == ']' {
-							break
-						} else {
-							Num = Num*10 + addr[j] - '0'
-						}
+					var cidr = line[2:n]
+					ip, ipNet, _ := net.ParseCIDR(cidr)
+					mask := ipNet.Mask.String()
+					var ll = ip.String()
+					lastIP := make(net.IP, len(ip))
+					for i := range ip {
+						lastIP[i] = ip[i] | ^mask[i]
 					}
 					if count > 0 {
 						return proxy, count
 					}
-					if ((nll1 > ll1) && (nll1 < rr1)) || ((nll1 == ll1) && (nll2 > ll2)) || ((nll1 == rr1) && (nll2 < rr2)) {
+					var rr = lastIP.String()
+
+					l1 := uint64(ll[0])<<48 | uint64(ll[1])<<32 | uint64(ll[2])<<16 | uint64(ll[3])
+					l2 := uint64(ll[4])<<48 | uint64(ll[5])<<32 | uint64(ll[6])<<16 | uint64(ll[7])
+					r1 := uint64(rr[0])<<48 | uint64(rr[1])<<32 | uint64(rr[2])<<16 | uint64(rr[3])
+					r2 := uint64(rr[4])<<48 | uint64(rr[5])<<32 | uint64(rr[6])<<16 | uint64(rr[7])
+					a1 := uint64(addr[0])<<48 | uint64(addr[1])<<32 | uint64(addr[2])<<16 | uint64(addr[3])
+					a2 := uint64(addr[4])<<48 | uint64(addr[5])<<32 | uint64(addr[6])<<16 | uint64(addr[7])
+					if ((a1 > l1) && (a1 < r1)) || ((a1 == l1) && (a2 > l2)) || ((a1 == r1) && (a2 < r2)) {
 						count = 0
 					} else {
 						count = -1
 					}
-
 				} else {
 					if count >= 0 {
 						n := len(line)

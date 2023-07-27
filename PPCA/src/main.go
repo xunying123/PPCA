@@ -65,7 +65,7 @@ func process(client net.Conn) {
 		return
 	}
 	ayp := array[3]
-	ype := array[1]
+	//ype := array[1]
 	addr := ""
 	support := true
 	switch ayp {
@@ -134,7 +134,6 @@ func process(client net.Conn) {
 		_, _ = client.Write([]byte{0x05, failed, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00})
 		return
 	}
-	defer Dest.Close()
 
 	ipDes, portDes, _ := net.SplitHostPort(Dest.LocalAddr().String())
 	ip_ := net.ParseIP(ipDes)
@@ -154,7 +153,15 @@ func process(client net.Conn) {
 	//fmt.Println(array[n : n+nn])
 	var proxy [16]string
 	var count = 0
-	proxy, eee, count = http(array)
+	Dest.Close()
+	proxy[0] = "127.0.0.1:8000"
+	proxy[1] = "127.0.0.1:8010"
+	proxy[2] = "127.0.0.1:8020"
+	proxy[3] = "127.0.0.1:8030"
+	count = 4
+	tcp(client, proxy, addr, n, nn, array, count)
+
+	/*proxy, eee, count = http(array)
 	if eee == nil {
 		if ype == 0x01 {
 			tcp(client, proxy, addr, n, nn, array, count)
@@ -170,7 +177,7 @@ func process(client net.Conn) {
 				udp(client, proxy, addr, n, nn, array, count)
 			}
 		} else {
-			proxy, eee, count = pid()
+			//proxy, eee, count = pid()
 			if eee == nil {
 				if ype == 0x01 {
 					tcp(client, proxy, addr, n, nn, array, count)
@@ -186,5 +193,5 @@ func process(client net.Conn) {
 				}
 			}
 		}
-	}
+	}*/
 }
