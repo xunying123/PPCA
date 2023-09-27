@@ -10,19 +10,19 @@ ACMCLSS2022暑期项目之一，在五周的时间内学习go语言，了解计�
 
 任选实现:
 
-- [透明代理](info\tun.md) 4’
-- [代理客户端](.\info\client.md) 1’
-  - [分流规则](.\info\rules.md)
-    - [按 socks 地址分流](.\info\rules-ip.md) 1’
+- [透明代理](/info/tun.md) 4’
+- [代理客户端](/info/client.md) 1’
+  - [分流规则](/info/rules.md)
+    - [按 socks 地址分流](/info/rules-ip.md) 1’
     - 按域名分流
-      - [HTTP 分流](.\info\rules-http.md) 1’
-      - [TLS 分流](.\info\rules-tls.md) 1’
-    - [按程序分流](.\info\rules-program.md) 1’
-  - [多级代理](.\info\chain.md) 2’
-- [UDP 代理](.\info\udp.md) 1’
-- [TLS 劫持](.\info\tls.md) 2’
-- [HTTP 捕获/修改/重放](.\info\replay.md) 3’
-- [反向代理](.\info\reverse.md)
+      - [HTTP 分流](/info/rules-http.md) 1’
+      - [TLS 分流](/info/rules-tls.md) 1’
+    - [按程序分流](/info/rules-program.md) 1’
+  - [多级代理](/info/chain.md) 2’
+- [UDP 代理](/info/udp.md) 1’
+- [TLS 劫持](/info/tls.md) 2’
+- [HTTP 捕获/修改/重放](/info/replay.md) 3’
+- [反向代理](/info/reverse.md)
   - TCP 反向代理 1’
   - HTTP 反向代理 1’
 - 自选选题 (请与助教联系)
