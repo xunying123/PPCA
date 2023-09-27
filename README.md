@@ -10,7 +10,7 @@ ACMCLSS2022暑期项目之一，在五周的时间内学习go语言，了解计�
 
 任选实现:
 
-- [透明代理](.\info\tun.md) 4’
+- [透明代理](\info\tun.md) 4’
 - [代理客户端](.\info\client.md) 1’
   - [分流规则](.\info\rules.md)
     - [按 socks 地址分流](.\info\rules-ip.md) 1’
